@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.ImageCapture
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
@@ -23,13 +22,9 @@ import java.util.concurrent.Executors
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.core.Preview
-import androidx.camera.core.CameraSelector
 import android.util.Log
 import androidx.camera.camera2.interop.Camera2CameraInfo
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
+import androidx.camera.core.*
 import androidx.camera.video.FallbackStrategy
 import androidx.camera.video.MediaStoreOutputOptions
 import androidx.camera.video.Quality
@@ -52,7 +47,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var cameraExecutor: ExecutorService
 
-    val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+    //val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +60,8 @@ class MainActivity : AppCompatActivity() {
         } else {
             requestPermissions()
         }
+
+
 
         // Set up the listeners for take photo and video capture buttons
         viewBinding.imageCaptureButton.setOnClickListener { takePhoto() }
@@ -230,35 +227,23 @@ class MainActivity : AppCompatActivity() {
                     it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
                 }
 
-            imageCapture = ImageCapture.Builder().build()
-
-            //-------*********
-
-            val selector = selectExternalOrBestCamera(cameraProvider)
-
-            //-------*********
-
-
-            val recorder = Recorder.Builder()
-                .setQualitySelector(QualitySelector.from(Quality.HIGHEST, FallbackStrategy.higherQualityOrLowerThan(Quality.SD)))
+            imageCapture = ImageCapture.Builder()
                 .build()
-            videoCapture = VideoCapture.withOutput(recorder)
 
             // Select back camera as a default
-            //val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
 
 
+            Log.e("Hahaha2", cameraSelector.toString())
 
             try {
                 // Unbind use cases before rebinding
                 cameraProvider.unbindAll()
 
                 // Bind use cases to camera
-                if (selector != null) {
-                    cameraProvider.bindToLifecycle(
-                        this, selector, preview, imageCapture)
-                }
+                cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview, imageCapture)
 
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
