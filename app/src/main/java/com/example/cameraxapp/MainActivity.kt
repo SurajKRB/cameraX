@@ -3,37 +3,32 @@ package com.example.cameraxapp
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentValues
+import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.camera2.CameraCharacteristics
-import android.hardware.usb.UsbDevice
-import android.hardware.usb.UsbManager
+import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CameraMetadata.LENS_FACING_EXTERNAL
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.video.Recorder
-import androidx.camera.video.Recording
-import androidx.camera.video.VideoCapture
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import com.example.cameraxapp.databinding.ActivityMainBinding
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.lifecycle.ProcessCameraProvider
-import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.core.*
-import androidx.camera.video.FallbackStrategy
-import androidx.camera.video.MediaStoreOutputOptions
-import androidx.camera.video.Quality
-import androidx.camera.video.QualitySelector
-import androidx.camera.video.VideoRecordEvent
+import androidx.camera.core.CameraSelector.LENS_FACING_BACK
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.*
+import androidx.camera.video.VideoCapture
+import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
-import java.nio.ByteBuffer
+import com.example.cameraxapp.databinding.ActivityMainBinding
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+
 
 typealias LumaListener = (luma: Double) -> Unit
 
@@ -46,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private var recording: Recording? = null
 
     private lateinit var cameraExecutor: ExecutorService
+
 
     //val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
 
@@ -60,6 +56,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             requestPermissions()
         }
+
 
 
 
@@ -213,6 +210,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
@@ -230,12 +228,23 @@ class MainActivity : AppCompatActivity() {
             imageCapture = ImageCapture.Builder()
                 .build()
 
+            val cameraManager = this.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+            val cameraIdList = cameraManager.cameraIdList.count()
+
+            Log.d("HAHACam", cameraIdList.toString())
+
             // Select back camera as a default
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+
+            val defaultBackCameraInfo: CameraInfo? = null
+            val selector = CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
+            val cameraInfo = selector.filter(cameraProvider.availableCameraInfos)
 
 
-
-            Log.e("Hahaha2", cameraSelector.toString())
+            Log.e("Hahaha1", cameraSelector.toString())
+            Log.e("Hahaha2", cameraInfo.toString())
 
             try {
                 // Unbind use cases before rebinding
@@ -243,7 +252,7 @@ class MainActivity : AppCompatActivity() {
 
                 // Bind use cases to camera
                 cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageCapture)
+                    this, selector, preview, imageCapture)
 
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
